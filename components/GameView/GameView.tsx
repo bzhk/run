@@ -1,12 +1,18 @@
 import React, { Component } from "react";
 import { StyleSheet, Text, View, Button, Dimensions } from "react-native";
 import config from "../data/board";
+import PlayerControlls from "./PlayerControlls";
 import Player from "./Player";
 import Board from "./Board";
 interface Props {}
 interface State {
   level: number;
   board: string[][];
+  controllers: {
+    x: number;
+    y: number;
+    rotation: string;
+  }[];
   playerIndexR: number;
   playerIndexC: number;
   checkCords: boolean;
@@ -27,6 +33,7 @@ export default class GameView extends Component<Props, State> {
       checkCords: false,
       level: 1,
       board: [],
+      controllers: [],
       playerIndexR: 0,
       playerIndexC: 0,
       screenWidth: width,
@@ -54,15 +61,91 @@ export default class GameView extends Component<Props, State> {
             playerIndexR: r_index,
             playerIndexC: c_index
           });
+          this.setControlers(r_index, c_index, board);
           return;
         }
       });
     });
   };
 
+  setControlers = (
+    r_index: number,
+    c_index: number,
+    board: string[][]
+  ): void => {
+    console.log("setControlers");
+
+    const controllersBucket: {
+      x: number;
+      y: number;
+      rotation: string;
+    }[] = [];
+    if (r_index > -1 && r_index < 9) {
+      if (board[r_index + 1] && board[r_index + 1][c_index] === "O") {
+        controllersBucket.push({
+          x: r_index + 1,
+          y: c_index,
+          rotation: "90deg"
+        });
+      }
+
+      if (board[r_index - 1] && board[r_index - 1][c_index] === "O") {
+        controllersBucket.push({
+          x: r_index - 1,
+          y: c_index,
+          rotation: "270deg"
+        });
+      }
+    }
+
+    if (c_index > -1 && c_index < 9) {
+      console.log("check", board[r_index][c_index + 1]);
+      if (board[r_index][c_index + 1] === "O") {
+        controllersBucket.push({
+          x: r_index,
+          y: c_index + 1,
+          rotation: "0deg"
+        });
+      }
+      if (board[r_index][c_index - 1] === "O") {
+        controllersBucket.push({
+          x: r_index,
+          y: c_index - 1,
+          rotation: "180deg"
+        });
+      }
+    }
+    this.setState({
+      controllers: controllersBucket
+    });
+  };
+
   render() {
+    console.log(this.state.controllers);
     return (
       <View style={styles.container}>
+        {this.state.controllers.map(
+          (
+            elem: {
+              x: number;
+              y: number;
+              rotation: string;
+            },
+            index: number
+          ) => {
+            return (
+              <PlayerControlls
+                key={index}
+                rIndex={elem.x}
+                cIndex={elem.y}
+                rotation={elem.rotation}
+                cellWidth={this.state.cellWidth}
+                boardMargin={this.state.boardMargin}
+              />
+            );
+          }
+        )}
+
         <Player
           rIndex={this.state.playerIndexR}
           cIndex={this.state.playerIndexC}
