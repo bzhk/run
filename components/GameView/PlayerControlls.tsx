@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Image, View, Button } from "react-native";
+import { Image, TouchableHighlight } from "react-native";
 const arrow: any = require("../assets/arrow.png");
 interface Props {
   rIndex: number;
@@ -7,6 +7,7 @@ interface Props {
   cellWidth: number;
   boardMargin: number;
   rotation: string;
+  move: (r_index: number, c_index: number) => void;
 }
 interface State {}
 export default class PlayerControlls extends Component<Props, State> {
@@ -15,24 +16,36 @@ export default class PlayerControlls extends Component<Props, State> {
   }
 
   render() {
-    const { rIndex, cIndex, cellWidth, boardMargin, rotation } = this.props;
-    console.log(rIndex, cIndex, cellWidth, boardMargin, rotation);
+    const {
+      rIndex,
+      cIndex,
+      cellWidth,
+      boardMargin,
+      rotation,
+      move
+    } = this.props;
+
     return (
-      <Image
-        source={arrow}
+      <TouchableHighlight
+        onPress={() => move(rIndex, cIndex)}
         style={{
+          zIndex: 100,
           width: cellWidth,
           height: cellWidth,
           position: "absolute",
-          transform: [{ rotate: rotation }],
           left: cellWidth * cIndex + boardMargin,
-          top: cellWidth * rIndex + boardMargin * 2,
-          zIndex: 10,
-          borderRadius: 2,
-          borderWidth: 1,
-          borderColor: "red"
+          top: cellWidth * rIndex + boardMargin * 2
         }}
-      />
+      >
+        <Image
+          source={arrow}
+          style={{
+            width: cellWidth,
+            height: cellWidth,
+            transform: [{ rotate: rotation }]
+          }}
+        />
+      </TouchableHighlight>
     );
   }
 }

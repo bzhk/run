@@ -73,8 +73,6 @@ export default class GameView extends Component<Props, State> {
     c_index: number,
     board: string[][]
   ): void => {
-    console.log("setControlers");
-
     const controllersBucket: {
       x: number;
       y: number;
@@ -99,7 +97,6 @@ export default class GameView extends Component<Props, State> {
     }
 
     if (c_index > -1 && c_index < 9) {
-      console.log("check", board[r_index][c_index + 1]);
       if (board[r_index][c_index + 1] === "O") {
         controllersBucket.push({
           x: r_index,
@@ -120,8 +117,14 @@ export default class GameView extends Component<Props, State> {
     });
   };
 
+  move = (r_index: number, c_index: number): void => {
+    this.setState({
+      playerIndexR: r_index,
+      playerIndexC: c_index
+    });
+    this.setControlers(r_index, c_index, this.state.board);
+  };
   render() {
-    console.log(this.state.controllers);
     return (
       <View style={styles.container}>
         {this.state.controllers.map(
@@ -141,6 +144,7 @@ export default class GameView extends Component<Props, State> {
                 rotation={elem.rotation}
                 cellWidth={this.state.cellWidth}
                 boardMargin={this.state.boardMargin}
+                move={this.move}
               />
             );
           }
