@@ -25,10 +25,7 @@ export default class Player extends Component<Props, State> {
           position: "absolute",
           left: cellWidth * cIndex + boardMargin,
           top: cellWidth * rIndex + boardMargin * 2,
-          zIndex: 10,
-          borderRadius: 2,
-          borderWidth: 1,
-          borderColor: "red"
+          zIndex: 10
         }}
       />
     );

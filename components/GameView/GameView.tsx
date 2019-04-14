@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { StyleSheet, Text, View, Button, Dimensions } from "react-native";
+import { StyleSheet, Text, View, Alert, Dimensions } from "react-native";
 import config from "../data/board";
 import PlayerControlls from "./PlayerControlls";
 import Player from "./Player";
@@ -161,10 +161,22 @@ export default class GameView extends Component<Props, State, Events> {
       switch (event) {
         case "D":
           objAfterEvent.mod_stamina = 8;
-
+          break;
+        case "M":
+          Alert.alert("You won!", `Next level => ${this.state.level + 1}`);
           break;
       }
       resolve(objAfterEvent);
+    });
+  };
+
+  resetLevel = (level: number): void => {
+    const levels: { [key: number]: string[][] } = config.levels;
+    let board = levels[level];
+    this.parseBoard(board);
+    this.setState({
+      board: board,
+      stamina: 10
     });
   };
 
@@ -179,6 +191,14 @@ export default class GameView extends Component<Props, State, Events> {
     const objAfterEvent = await this.parseEvent(event);
     this.clearItem(r_index, c_index);
     const { mod_stamina } = objAfterEvent;
+    if (newStamina + mod_stamina <= 0) {
+      Alert.alert(
+        "You lose!",
+        "Try again.",
+        [{ text: "Reset", onPress: () => this.resetLevel(this.state.level) }],
+        { cancelable: false }
+      );
+    }
     this.setState({
       playerIndexR: r_index,
       playerIndexC: c_index,
