@@ -1,13 +1,12 @@
 import React, { Component } from "react";
-import { Image, TouchableHighlight } from "react-native";
-const arrow: any = require("../assets/arrow.png");
+import { View, TouchableHighlight } from "react-native";
+
 interface Props {
   rIndex: number;
   cIndex: number;
   cellWidth: number;
   boardMargin: number;
-  rotation: string;
-  move: (r_index: number, c_index: number) => void;
+  move: () => void;
 }
 interface State {}
 export default class PlayerControlls extends Component<Props, State> {
@@ -16,35 +15,24 @@ export default class PlayerControlls extends Component<Props, State> {
   }
 
   render() {
-    const {
-      rIndex,
-      cIndex,
-      cellWidth,
-      boardMargin,
-      rotation,
-      move
-    } = this.props;
+    const { rIndex, cIndex, cellWidth, boardMargin, move } = this.props;
 
     return (
       <TouchableHighlight
-        onPress={() => move(rIndex, cIndex)}
+        onPress={move}
         style={{
           zIndex: 100,
           width: cellWidth,
           height: cellWidth,
           position: "absolute",
           left: cellWidth * cIndex + boardMargin,
-          top: cellWidth * rIndex + boardMargin * 2
+          top: cellWidth * rIndex + boardMargin * 2,
+          borderRadius: 2,
+          borderWidth: 1,
+          borderColor: "green"
         }}
       >
-        <Image
-          source={arrow}
-          style={{
-            width: cellWidth,
-            height: cellWidth,
-            transform: [{ rotate: rotation }]
-          }}
-        />
+        <View />
       </TouchableHighlight>
     );
   }
