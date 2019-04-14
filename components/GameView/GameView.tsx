@@ -6,6 +6,13 @@ import Player from "./Player";
 import Board from "./Board";
 import BoardItem from "./BoardItem";
 interface Events {
+  id: number;
+  x: number;
+  y: number;
+  rotation: string;
+  label: string;
+}
+interface Controller {
   x: number;
   y: number;
   rotation: string;
@@ -16,15 +23,16 @@ interface State {
   level: number;
   board: string[][];
   events: Events[];
-  controllers: Events[];
+  enemyMoves: { [key: string]: boolean };
+  controllers: Controller[];
   playerIndexR: number;
   playerIndexC: number;
-  checkCords: boolean;
   screenWidth: number;
   boardWidth: number;
   boardMargin: number;
   cellWidth: number;
   stamina: number;
+  controllerParsed: boolean;
 }
 
 export default class GameView extends Component<Props, State, Events> {
@@ -35,10 +43,11 @@ export default class GameView extends Component<Props, State, Events> {
     const boardMargin: number = width * 0.1;
     const cellWidth: number = boardWidth / 9;
     this.state = {
-      checkCords: false,
+      controllerParsed: false,
       level: 1,
       board: [],
       events: [],
+      enemyMoves: {},
       controllers: [],
       playerIndexR: 0,
       playerIndexC: 0,
@@ -64,15 +73,17 @@ export default class GameView extends Component<Props, State, Events> {
     x: number,
     y: number,
     rotation: string,
-    label: string
+    label: string,
+    id: number
   ): Events => {
-    return { x, y, rotation, label };
+    return { id, x, y, rotation, label };
   };
 
   parseBoard = (board: string[][]): void => {
     const newEvents: Events[] = [];
     board.forEach((row: string[], r_index: number) => {
       row.forEach((cell: string, c_index: number) => {
+        const id = newEvents.length + 1;
         if (cell == "S") {
           this.setState({
             playerIndexR: r_index,
@@ -81,10 +92,13 @@ export default class GameView extends Component<Props, State, Events> {
           this.setControlers(r_index, c_index, board);
         }
         if (cell === "Z") {
-          newEvents.push(this.newEvent(r_index, c_index, "", "Z"));
+          newEvents.push(this.newEvent(r_index, c_index, "", "Z", id));
         }
         if (cell == "D") {
-          newEvents.push(this.newEvent(r_index, c_index, "", "D"));
+          newEvents.push(this.newEvent(r_index, c_index, "", "D", id));
+        }
+        if (cell == "X") {
+          newEvents.push(this.newEvent(r_index, c_index, "", "X", id));
         }
       });
     });
@@ -98,47 +112,68 @@ export default class GameView extends Component<Props, State, Events> {
     c_index: number,
     board: string[][]
   ): void => {
-    const controllersBucket: Events[] = [];
+    const controllersBucket: Controller[] = [];
     if (r_index > -1 && r_index < 9) {
-      if (board[r_index + 1] && board[r_index + 1][c_index] !== "Z") {
-        controllersBucket.push({
-          x: r_index + 1,
-          y: c_index,
-          rotation: "90deg",
-          label: "C"
-        });
+      if (board[r_index + 1]) {
+        const obstacle = this.state.events
+          .filter(elem => elem.label == "Z" || elem.label == "X")
+          .findIndex(elem => elem.x == r_index + 1 && elem.y == c_index);
+        if (obstacle === -1) {
+          controllersBucket.push({
+            x: r_index + 1,
+            y: c_index,
+            rotation: "90deg",
+            label: "C"
+          });
+        }
       }
 
-      if (board[r_index - 1] && board[r_index - 1][c_index] !== "Z") {
-        controllersBucket.push({
-          x: r_index - 1,
-          y: c_index,
-          rotation: "270deg",
-          label: "C"
-        });
+      if (board[r_index - 1]) {
+        const obstacle = this.state.events
+          .filter(elem => elem.label == "Z" || elem.label == "X")
+          .findIndex(elem => elem.x == r_index - 1 && elem.y == c_index);
+        if (obstacle === -1) {
+          controllersBucket.push({
+            x: r_index - 1,
+            y: c_index,
+            rotation: "270deg",
+            label: "C"
+          });
+        }
       }
     }
 
     if (c_index > -1 && c_index < 9) {
-      if (board[r_index][c_index + 1] && board[r_index][c_index + 1] !== "Z") {
-        controllersBucket.push({
-          x: r_index,
-          y: c_index + 1,
-          rotation: "0deg",
-          label: "C"
-        });
+      if (board[r_index][c_index + 1]) {
+        const obstacle = this.state.events
+          .filter(elem => elem.label == "Z" || elem.label == "X")
+          .findIndex(elem => elem.x == r_index && elem.y == c_index + 1);
+        if (obstacle === -1) {
+          controllersBucket.push({
+            x: r_index,
+            y: c_index + 1,
+            rotation: "0deg",
+            label: "C"
+          });
+        }
       }
-      if (board[r_index][c_index - 1] && board[r_index][c_index - 1] !== "Z") {
-        controllersBucket.push({
-          x: r_index,
-          y: c_index - 1,
-          rotation: "180deg",
-          label: "C"
-        });
+      if (board[r_index][c_index - 1]) {
+        const obstacle = this.state.events
+          .filter(elem => elem.label == "Z" || elem.label == "X")
+          .findIndex(elem => elem.x == r_index && elem.y == c_index - 1);
+        if (obstacle === -1) {
+          controllersBucket.push({
+            x: r_index,
+            y: c_index - 1,
+            rotation: "180deg",
+            label: "C"
+          });
+        }
       }
     }
     this.setState({
-      controllers: controllersBucket
+      controllers: controllersBucket,
+      controllerParsed: true
     });
   };
 
@@ -156,7 +191,7 @@ export default class GameView extends Component<Props, State, Events> {
   };
 
   parseEvent = (event: string): Promise<{ mod_stamina: number }> => {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       const objAfterEvent: { mod_stamina: number } = { mod_stamina: 0 };
       switch (event) {
         case "D":
@@ -164,6 +199,8 @@ export default class GameView extends Component<Props, State, Events> {
           break;
         case "M":
           Alert.alert("You won!", `Next level => ${this.state.level + 1}`);
+          this.resetLevel(1);
+          resolve();
           break;
       }
       resolve(objAfterEvent);
@@ -189,6 +226,9 @@ export default class GameView extends Component<Props, State, Events> {
     const newStamina = stamina - 1;
     const event = board[r_index][c_index];
     const objAfterEvent = await this.parseEvent(event);
+    if (!objAfterEvent) {
+      return;
+    }
     this.clearItem(r_index, c_index);
     const { mod_stamina } = objAfterEvent;
     if (newStamina + mod_stamina <= 0) {
@@ -204,13 +244,135 @@ export default class GameView extends Component<Props, State, Events> {
       playerIndexC: c_index,
       stamina: newStamina + mod_stamina
     });
-    this.setControlers(r_index, c_index, board);
+
+    this.state.events
+      .filter(elem => elem.label == "Z")
+      .forEach(async (elem, index) => {
+        const { x, y, id } = elem;
+
+        const newEnemyMoves = Object.assign(this.state.enemyMoves, {
+          [`en_${index}`]: true
+        });
+
+        await this.setState({
+          enemyMoves: newEnemyMoves
+        });
+        await this.enemyMove(x, y, r_index, c_index, [], index, id);
+      });
+  };
+
+  enemyMove = async (
+    e_x: number,
+    e_y: number,
+    p_x: number,
+    p_y: number,
+    lastSteps: { x: number; y: number }[],
+    index: number,
+    e_id: number
+  ): Promise<void> => {
+    const check = this.state.enemyMoves[`en_${index}`];
+    if (e_x == p_x && e_y == p_y && check) {
+      const path = lastSteps;
+      const { x, y } = path[0];
+
+      const events = [...this.state.events];
+      const enemyIndex = this.state.events.findIndex(elem => {
+        return elem.id == e_id;
+      });
+
+      if (x == p_x && y == p_y) {
+        Alert.alert(
+          "You was eaten by pigeon! :(",
+          "Try again.",
+          [{ text: "Reset", onPress: () => this.resetLevel(this.state.level) }],
+          { cancelable: false }
+        );
+      }
+
+      events[enemyIndex] = {
+        id: events[enemyIndex].id,
+        x,
+        y,
+        rotation: events[enemyIndex].rotation,
+        label: events[enemyIndex].label
+      };
+
+      const newEnemyMoves = Object.assign(this.state.enemyMoves, {
+        [`en_${index}`]: false
+      });
+
+      await this.setState({
+        enemyMoves: newEnemyMoves,
+        events
+      });
+      this.setControlers(p_x, p_y, this.state.board);
+      return;
+    }
+
+    if (!check) {
+      return;
+    }
+
+    const inc_e_x = e_x + 1;
+    const inc_e_y = e_y + 1;
+    const desc_e_x = e_x - 1;
+    const desc_e_y = e_y - 1;
+    const moves = [
+      { x: inc_e_x, y: e_y },
+      { x: desc_e_x, y: e_y },
+      { x: e_x, y: inc_e_y },
+      { x: e_x, y: desc_e_y }
+    ]
+      .sort((a, b) => {
+        if (a.x < p_x) {
+          return b.x - a.x;
+        } else {
+          return a.x - b.x;
+        }
+      })
+      .sort((a, b) => {
+        if (a.y < p_y) {
+          return b.y - a.y;
+        } else {
+          return a.y - b.y;
+        }
+      })
+      .filter(elem => {
+        return -1 < elem.x && elem.x < 9 && -1 < elem.y && elem.y < 9;
+      })
+      .filter(elem => {
+        return (
+          lastSteps.findIndex(item => item.x == elem.x && item.y == elem.y) ==
+          -1
+        );
+      })
+      .filter(elem => {
+        const conflictMove = this.state.events.findIndex(item => {
+          return (
+            item.x == elem.x &&
+            item.y == elem.y &&
+            item.id != e_id &&
+            item.label == "Z"
+          );
+        });
+
+        return conflictMove === -1;
+      });
+
+    return moves.forEach(elem => {
+      const { x, y } = elem;
+
+      return this.enemyMove(x, y, p_x, p_y, [...lastSteps, elem], index, e_id);
+    });
   };
 
   render() {
+    if (this.state.controllerParsed && this.state.controllers.length === 0) {
+      Alert.alert("You lose!");
+    }
     return (
       <View style={styles.container}>
-        {this.state.controllers.map((elem: Events, index: number) => {
+        {this.state.controllers.map((elem: Controller, index: number) => {
           return (
             <PlayerControlls
               key={index}

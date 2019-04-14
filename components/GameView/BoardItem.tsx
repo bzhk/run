@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { Image } from "react-native";
 const drink: any = require("../assets/drink.png");
 const enemy: any = require("../assets/enemy.png");
+const xImg: any = require("../assets/X.png");
 interface Props {
   rIndex: number;
   cIndex: number;
@@ -24,6 +25,9 @@ export default class BoardItem extends Component<Props, State> {
         break;
       case "Z":
         img = enemy;
+        break;
+      case "X":
+        img = xImg;
         break;
     }
     return (

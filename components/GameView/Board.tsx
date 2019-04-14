@@ -45,7 +45,7 @@ export default class Board extends Component<Props, State> {
                     }}
                     key={c_index}
                   >
-                    {/* <Text>{cell}</Text> */}
+                    {cell == "M" && <Text>{cell}</Text>}
                   </View>
                 );
               })}
