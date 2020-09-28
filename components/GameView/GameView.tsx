@@ -207,8 +207,15 @@ export default class GameView extends Component<Props, State, Events> {
           objAfterEvent.mod_stamina = 8;
           break;
         case 'M':
-          Alert.alert('You won!', `Next level => ${this.state.level + 1}`);
-          this.resetLevel(1);
+          this.setState(
+            {
+              level: this.state.level + 1,
+            },
+            () => {
+              Alert.alert('You won!', `Next level => ${this.state.level}`);
+              this.resetLevel(this.state.level);
+            },
+          );
           resolve();
           break;
       }
@@ -218,7 +225,9 @@ export default class GameView extends Component<Props, State, Events> {
 
   resetLevel = async (level: number): Promise<void> => {
     const levels: {[key: number]: string[][]} = config.levels;
-    let board = levels[level];
+
+    let board = levels[level] || levels[level - 1];
+    console.log(board);
     await this.parseBoard(board);
     this.setState({
       board: board,
@@ -267,7 +276,7 @@ export default class GameView extends Component<Props, State, Events> {
         await this.setState({
           enemyMoves: newEnemyMoves,
         });
-        console.log('move enemy - ', index);
+
         await this.enemyMove(x, y, r_index, c_index, [], index, id);
       });
   };
@@ -283,8 +292,6 @@ export default class GameView extends Component<Props, State, Events> {
   ): Promise<void> => {
     const check = this.state.enemyMoves[`en_${index}`];
     if (e_x == p_x && e_y == p_y && check) {
-      console.log('ruch pidgeona' + index);
-
       const path = lastSteps;
       const {x, y} = path[0];
 
